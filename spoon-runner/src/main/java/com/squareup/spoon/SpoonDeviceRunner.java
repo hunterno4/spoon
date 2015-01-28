@@ -10,6 +10,7 @@ import com.android.ddmlib.testrunner.IRemoteAndroidTestRunner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -21,8 +22,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+
 import com.squareup.spoon.adapters.TestIdentifierAdapter;
 
 import static com.android.ddmlib.FileListingService.FileEntry;
@@ -54,10 +57,11 @@ public final class SpoonDeviceRunner {
   private final String methodName;
   private final IRemoteAndroidTestRunner.TestSize testSize;
   private final File work;
-  private final File junitReport;
+  private File junitReport;
   private final File imageDir;
   private final String classpath;
   private final SpoonInstrumentationInfo instrumentationInfo;
+  private File output;
 
   /**
    * Create a test runner for a single device.
@@ -93,6 +97,7 @@ public final class SpoonDeviceRunner {
     this.instrumentationInfo = instrumentationInfo;
 
     serial = SpoonUtils.sanitizeSerial(serial);
+    this.output = output;
     this.work = FileUtils.getFile(output, TEMP_DIR, serial);
     this.junitReport = FileUtils.getFile(output, JUNIT_DIR, serial + ".xml");
     this.imageDir = FileUtils.getFile(output, IMAGE_DIR, serial);
@@ -184,27 +189,64 @@ public final class SpoonDeviceRunner {
     SpoonDeviceLogger deviceLogger = new SpoonDeviceLogger(device);
 
     // Run all the tests! o/
-    try {
-      logDebug(debug, "About to actually run tests for [%s]", serial);
-      RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(testPackage, testRunner, device);
-      runner.setMaxtimeToOutputResponse(adbTimeout);
-      if (!Strings.isNullOrEmpty(className)) {
-        if (Strings.isNullOrEmpty(methodName)) {
-          runner.setClassName(className);
-        } else {
-          runner.setMethodName(className, methodName);
-        }
-      }
-      if (testSize != null) {
-        runner.setTestSize(testSize);
-      }
-      runner.run(
-          new SpoonTestRunListener(result, debug, testIdentifierAdapter),
-          new XmlTestRunListener(junitReport)
-      );
-    } catch (Exception e) {
-      result.addException(e);
+    
+    String[] classNameList = className.split(",");
+    String currentClassName = "";
+    RemoteAndroidTestRunner runner = null;
+    for(int i=0;i<classNameList.length;i++){
+    	currentClassName= classNameList[i];
+    	System.out.println(currentClassName);
+    	
+    	try {
+    	      logDebug(debug, "About to actually run tests for [%s]", serial);
+    	      junitReport = FileUtils.getFile(output, JUNIT_DIR, serial + "_" + i + "_" +".xml");
+    	      runner = new RemoteAndroidTestRunner(testPackage, testRunner, device);
+    	      runner.setCoverage(true);
+    	      runner.addInstrumentationArg("coverageFile", "/sdcard/robotium/spoon" + i + ".ec");
+    	      runner.setMaxtimeToOutputResponse(adbTimeout);
+    	      if (!Strings.isNullOrEmpty(currentClassName)) {
+    	        if (Strings.isNullOrEmpty(methodName)) {
+    	          runner.setClassName(currentClassName);
+    	        } else {
+    	          runner.setMethodName(currentClassName, methodName);
+    	        }
+    	      }
+    	      if (testSize != null) {
+    	        runner.setTestSize(testSize);
+    	      }
+    	      runner.run(
+    	          new SpoonTestRunListener(result, debug, testIdentifierAdapter),
+    	          new XmlTestRunListener(junitReport)
+    	      );
+    	    } catch (Exception e) {
+    	      result.addException(e);
+    	    }
     }
+    
+    
+//    try {
+//      logDebug(debug, "About to actually run tests for [%s]", serial);
+//      RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(testPackage, testRunner, device);
+//      runner.setCoverage(true);
+//      runner.addInstrumentationArg("coverageFile", "/sdcard/robotium/spoon.ec");
+//      runner.setMaxtimeToOutputResponse(adbTimeout);
+//      if (!Strings.isNullOrEmpty(className)) {
+//        if (Strings.isNullOrEmpty(methodName)) {
+//          runner.setClassName(className);
+//        } else {
+//          runner.setMethodName(className, methodName);
+//        }
+//      }
+//      if (testSize != null) {
+//        runner.setTestSize(testSize);
+//      }
+//      runner.run(
+//          new SpoonTestRunListener(result, debug, testIdentifierAdapter),
+//          new XmlTestRunListener(junitReport)
+//      );
+//    } catch (Exception e) {
+//      result.addException(e);
+//    }
 
     // Grab all the parsed logs and map them to individual tests.
     Map<DeviceTest, List<LogCatMessage>> logs = deviceLogger.getParsedLogs();
@@ -219,9 +261,15 @@ public final class SpoonDeviceRunner {
       logDebug(debug, "About to grab screenshots and prepare output for [%s]", serial);
 
       // Sync device screenshots, if any, to the local filesystem.
-      String dirName = "app_" + SPOON_SCREENSHOTS;
+//      String dirName = "app_" + SPOON_SCREENSHOTS;
+      
+      String dirName = SPOON_SCREENSHOTS;
       String localDirName = work.getAbsolutePath();
-      final String devicePath = "/data/data/" + appPackage + "/" + dirName;
+//      final String devicePath = "/data/data/" + appPackage + "/" + dirName;
+      
+      final String devicePath = "/mnt/sdcard/" + dirName; 
+      
+      
       FileEntry deviceDir = obtainDirectoryFileEntry(devicePath);
       logDebug(debug, "Pulling screenshots from [%s] %s", serial, devicePath);
 

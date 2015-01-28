@@ -20,12 +20,12 @@ final class HtmlUtils {
   private static final String INVALID_ID_CHARS = "[^a-zA-Z0-9]";
   private static final ThreadLocal<Format> DATE_FORMAT = new ThreadLocal<Format>() {
     @Override protected Format initialValue() {
-      return new SimpleDateFormat("yyyy-MM-dd hh:mm a");
+      return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
     }
   };
   private static final ThreadLocal<Format> DATE_FORMAT_TV = new ThreadLocal<Format>() {
     @Override protected Format initialValue() {
-      return new SimpleDateFormat("EEEE, MMMM dd, h:mm a");
+      return new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
     }
   };
 
@@ -100,13 +100,12 @@ final class HtmlUtils {
 
   /** Convert a method name from {@code testThisThing_DoesThat} to "This Thing, Does That". */
   static String prettifyMethodName(String methodName) {
-    if (methodName.startsWith("test")) {
-      methodName = methodName.substring(4);
-    } else if (Character.isLowerCase(methodName.charAt(0))) {
-      methodName = Character.toUpperCase(methodName.charAt(0)) + methodName.substring(1);
+    if (!methodName.startsWith("test")) {
+      throw new IllegalArgumentException(
+          "Method name '" + methodName + "' does not start with 'test'.");
     }
     StringBuilder pretty = new StringBuilder();
-    String[] parts = methodName.split("_");
+    String[] parts = methodName.substring(4).split("_");
     for (String part : parts) {
       if ("".equals(part.trim())) {
         continue; // Skip empty parts.

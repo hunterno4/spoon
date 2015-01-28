@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{{title}}</title>
-        <link href="https://fonts.googleapis.com/css?family=Roboto:regular,medium,thin,italic,mediumitalic,bold" rel="stylesheet">
+        <link href="../../static/fonts.css" rel="stylesheet">
         <link href="../../static/bootstrap.min.css" rel="stylesheet">
         <link href="../../static/bootstrap-responsive.min.css" rel="stylesheet">
         <link href="../../static/spoon.css" rel="stylesheet">
@@ -15,13 +15,13 @@
     <body>
         <div class="container">
             <div class="hero-unit">
-                <h1>{{title}}</h1>
+                <h2>{{title}}</h2>
                 <p>{{subtitle}}</p>
             </div>
             {{#devices}}
             <div class="row">
                 <div class="span12">
-                    <h2 class="test-result {{status}}">
+                    <h3 class="test-result {{status}}">
                         {{name}}
                         <!-- Icons modified from Glyphish Free. http://glyphish.com -->
                         <a href="../../logs/{{serial}}/{{className}}/{{methodName}}.html" title="View device log" class="pull-right icon">
@@ -35,7 +35,7 @@
                             <img src="../../static/icon-animated.png" alt="View as animated GIF">
                         </a>
                         {{/hasScreenshots}}
-                    </h2>
+                    </h3>
                     {{#exception}}
                     <div class="alert alert-error stacktrace {{status}}">
                         <h4 data-toggle="collapse" data-target="#stacktrace-{{serial}}">{{{title}}}</h4>

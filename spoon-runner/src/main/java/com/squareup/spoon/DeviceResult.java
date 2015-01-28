@@ -119,14 +119,14 @@ public final class DeviceResult {
 
     public Builder startTests() {
       checkArgument(!installFailed, "Cannot start tests when install failed.");
-      checkArgument(start == 0, "Start already called.");
+//      checkArgument(start == 0, "Start already called.");
       start = System.nanoTime();
       return this;
     }
 
     public Builder endTests() {
       checkArgument(start != 0, "Start was not called.");
-      checkArgument(duration == -1, "End was already called.");
+//      checkArgument(duration == -1, "End was already called.");
       duration = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start);
       return this;
     }
