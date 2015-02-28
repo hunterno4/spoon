@@ -85,9 +85,16 @@ You can run Spoon as a standalone tool with your application and instrumentation
 APKs.
 
 ```
+原来的使用方式：
 java -jar spoon-runner-1.1.1-jar-with-dependencies.jar \
     --apk example-app.apk \
     --test-apk example-tests.apk
+推荐的使用方式：
+java -jar spoon-runner-1.1.3-SNAPSHOT-jar-with-dependencies.jar \
+    --apk spoon-sample-app-1.1.3-SNAPSHOT.apk \
+    --test-apk spoon-sample-tests-1.1.3-SNAPSHOT.apk \
+    --class-name com.example.spoon.ordering.tests.LoginActivityTest,com.example.spoon.ordering.tests.MiscellaneousTest
+多个用例集用,号隔开
 ```
 
 By default the output will be placed in a spoon-output/ folder of the current

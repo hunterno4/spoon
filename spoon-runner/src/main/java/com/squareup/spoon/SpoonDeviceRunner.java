@@ -26,6 +26,8 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 
+import com.squareup.spoon.SpoonTestRunListener;
+import com.squareup.spoon.XmlTestRunListener;
 import com.squareup.spoon.adapters.TestIdentifierAdapter;
 
 import static com.android.ddmlib.FileListingService.FileEntry;
@@ -189,64 +191,66 @@ public final class SpoonDeviceRunner {
     SpoonDeviceLogger deviceLogger = new SpoonDeviceLogger(device);
 
     // Run all the tests! o/
-    
-    String[] classNameList = className.split(",");
-    String currentClassName = "";
-    RemoteAndroidTestRunner runner = null;
-    for(int i=0;i<classNameList.length;i++){
-    	currentClassName= classNameList[i];
-    	System.out.println(currentClassName);
-    	
+    String[] classNameList = null;
+    if(!Strings.isNullOrEmpty(className)){
+    	classNameList = className.split(",");
+    	String currentClassName = "";
+        RemoteAndroidTestRunner runner = null;
+        for(int i=0;i<classNameList.length;i++){
+        	currentClassName= classNameList[i];
+        	System.out.println(currentClassName);
+        	
+        	try {
+        	      logDebug(debug, "About to actually run tests for [%s]", serial);
+        	      junitReport = FileUtils.getFile(output, JUNIT_DIR, serial + "_" + i + "_" +".xml");
+        	      runner = new RemoteAndroidTestRunner(testPackage, testRunner, device);
+        	      runner.setCoverage(true);
+        	      runner.addInstrumentationArg("coverageFile", "/sdcard/robotium/spoon" + i + ".ec");
+        	      runner.setMaxtimeToOutputResponse(adbTimeout);
+        	      if (!Strings.isNullOrEmpty(currentClassName)) {
+        	        if (Strings.isNullOrEmpty(methodName)) {
+        	          runner.setClassName(currentClassName);
+        	        } else {
+        	          runner.setMethodName(currentClassName, methodName);
+        	        }
+        	      }
+        	      if (testSize != null) {
+        	        runner.setTestSize(testSize);
+        	      }
+        	      runner.run(
+        	          new SpoonTestRunListener(result, debug, testIdentifierAdapter),
+        	          new XmlTestRunListener(junitReport)
+        	      );
+        	    } catch (Exception e) {
+        	      result.addException(e);
+                }
+          }
+    }else {
     	try {
-    	      logDebug(debug, "About to actually run tests for [%s]", serial);
-    	      junitReport = FileUtils.getFile(output, JUNIT_DIR, serial + "_" + i + "_" +".xml");
-    	      runner = new RemoteAndroidTestRunner(testPackage, testRunner, device);
-    	      runner.setCoverage(true);
-    	      runner.addInstrumentationArg("coverageFile", "/sdcard/robotium/spoon" + i + ".ec");
-    	      runner.setMaxtimeToOutputResponse(adbTimeout);
-    	      if (!Strings.isNullOrEmpty(currentClassName)) {
-    	        if (Strings.isNullOrEmpty(methodName)) {
-    	          runner.setClassName(currentClassName);
-    	        } else {
-    	          runner.setMethodName(currentClassName, methodName);
-    	        }
-    	      }
-    	      if (testSize != null) {
-    	        runner.setTestSize(testSize);
-    	      }
-    	      runner.run(
-    	          new SpoonTestRunListener(result, debug, testIdentifierAdapter),
-    	          new XmlTestRunListener(junitReport)
-    	      );
-    	    } catch (Exception e) {
-    	      result.addException(e);
-    	    }
-    }
+  	      logDebug(debug, "About to actually run tests for [%s]", serial);
+  	      RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(testPackage, testRunner, device);
+  	      runner.setCoverage(true);
+  	      runner.addInstrumentationArg("coverageFile", "/sdcard/robotium/spoon.ec");
+  	      runner.setMaxtimeToOutputResponse(adbTimeout);
+  	      if (!Strings.isNullOrEmpty(className)) {
+  	        if (Strings.isNullOrEmpty(methodName)) {
+  	          runner.setClassName(className);
+  	        } else {
+  	          runner.setMethodName(className, methodName);
+  	        }
+  	      }
+  	      if (testSize != null) {
+  	        runner.setTestSize(testSize);
+  	      }
+  	      runner.run(
+  	          new SpoonTestRunListener(result, debug, testIdentifierAdapter),
+  	          new XmlTestRunListener(junitReport)
+  	      );
+  	    } catch (Exception e) {
+  	      result.addException(e);
+  	    }
+	}
     
-    
-//    try {
-//      logDebug(debug, "About to actually run tests for [%s]", serial);
-//      RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(testPackage, testRunner, device);
-//      runner.setCoverage(true);
-//      runner.addInstrumentationArg("coverageFile", "/sdcard/robotium/spoon.ec");
-//      runner.setMaxtimeToOutputResponse(adbTimeout);
-//      if (!Strings.isNullOrEmpty(className)) {
-//        if (Strings.isNullOrEmpty(methodName)) {
-//          runner.setClassName(className);
-//        } else {
-//          runner.setMethodName(className, methodName);
-//        }
-//      }
-//      if (testSize != null) {
-//        runner.setTestSize(testSize);
-//      }
-//      runner.run(
-//          new SpoonTestRunListener(result, debug, testIdentifierAdapter),
-//          new XmlTestRunListener(junitReport)
-//      );
-//    } catch (Exception e) {
-//      result.addException(e);
-//    }
 
     // Grab all the parsed logs and map them to individual tests.
     Map<DeviceTest, List<LogCatMessage>> logs = deviceLogger.getParsedLogs();
